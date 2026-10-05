@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-kopub@1.0/kopubdotum.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-kopub@1.0/kopubbatang.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --ink: #1B1B1F;
+    --ink-soft: #55555E;
+    --ink-faint: #9494A0;
+    --accent: #5B5FEF;
+    --danger: #E5484D;
+    --danger-soft: rgba(229,72,77,0.12);
+    --glass-border: rgba(255,255,255,0.55);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --shadow-window: 0 30px 70px -20px rgba(20,20,40,0.35), 0 8px 24px -8px rgba(20,20,40,0.2);
+    --shadow-dock: 0 20px 50px -18px rgba(20,20,40,0.30);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Pretendard','Inter',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  .desktop{
+    position:fixed; inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, #A9B4FF 0%, transparent 42%),
+      radial-gradient(circle at 85% 15%, #FFC9DE 0%, transparent 45%),
+      radial-gradient(circle at 75% 85%, #B7F0D6 0%, transparent 45%),
+      radial-gradient(circle at 20% 85%, #FFE3AE 0%, transparent 40%),
+      linear-gradient(160deg, #DCE0F7 0%, #EFE7F4 50%, #E4F1EA 100%);
+    filter: blur(60px) saturate(115%);
+    transform: scale(1.15);
+  }
+
+  .shell{
+    position:relative; z-index:1;
+    display:grid; grid-template-columns: 240px 1fr; gap:20px;
+    height:100vh; padding:24px;
+  }
+
+  /* ================= DOCK ================= */
+  .dock{
+    background:rgba(255,255,255,0.42);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-dock);
+    display:flex; flex-direction:column;
+    padding:16px 14px; gap:14px; overflow:hidden;
+  }
+  .brand{ display:flex; align-items:center; gap:8px; padding:2px 4px 4px; }
+  .brand-dot{ width:9px;height:9px; border-radius:50%; background:var(--accent); }
+  .brand-name{ font-size:13px; font-weight:700; letter-spacing:-0.01em; color:var(--ink); }
+
+  .new-btn{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    background:rgba(27,27,31,0.9); color:#fff; border:none;
+    border-radius:var(--radius-sm); padding:9px 12px;
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    transition: transform .1s ease, background .15s ease;
+  }
+  .new-btn:hover{ background:#000; }
+  .new-btn:active{ transform:scale(0.97); }
+
+  .search-wrap{ position:relative; }
+  .search-wrap svg{ position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); }
+  .search{
+    width:100%; background:rgba(255,255,255,0.55);
+    border:1px solid rgba(255,255,255,0.6); border-radius:var(--radius-sm);
+    padding:8px 10px 8px 30px; font-size:12.5px; font-family:inherit; color:var(--ink); outline:none;
+  }
+  .search:focus{ border-color:var(--accent); background:#fff; }
+  .search::placeholder{ color:var(--ink-faint); }
+
+  .dock-label{ font-size:10.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); padding:2px 6px; }
+
+  .note-list{ display:flex; flex-direction:column; gap:3px; overflow-y:auto; flex:1; padding-right:2px; }
+  .note-item{ position:relative; display:flex; flex-direction:column; gap:2px; padding:8px 8px 8px 12px; border-radius:var(--radius-sm); cursor:pointer; transition: background .12s ease; }
+  .note-item:hover{ background:rgba(255,255,255,0.55); }
+  .note-item.active{ background:rgba(255,255,255,0.75); }
+  .note-item.active::before{ content:""; position:absolute; left:1px; top:7px; bottom:7px; width:3px; border-radius:2px; background:var(--dot, var(--accent)); }
+  .note-top{ display:flex; align-items:center; gap:6px; }
+  .tag-dot{ width:6px;height:6px;border-radius:50%; background:var(--dot, var(--accent)); flex-shrink:0; }
+  .note-item h3{ margin:0; font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pin-mark{ margin-left:auto; color:var(--ink-faint); display:flex; }
+  .note-item p{ margin:0 0 0 12px; font-size:11px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .empty-list{ text-align:center; color:var(--ink-faint); font-size:12px; padding:20px 8px; line-height:1.6; }
+
+  /* ================= MAIN ================= */
+  .main{ position:relative; display:flex; align-items:flex-start; justify-content:center; padding-top:2vh; overflow-y:auto; }
+
+  .window{
+    position:relative;
+    width:100%; max-width:640px;
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-window);
+    overflow:visible;
+  }
+  .win-titlebar{ display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:grab; border-bottom:1px solid rgba(0,0,0,0.05); position:relative; z-index:2; }
+  .win-dots{ display:flex; gap:5px; }
+  .win-dots span{ width:7px;height:7px;border-radius:50%; background:rgba(27,27,31,0.22); }
+  .win-title{ font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-right:auto; letter-spacing:-0.005em; text-shadow:0 1px 2px rgba(255,255,255,0.5); }
+  .win-icon-btn{ display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer; transition: background .12s ease, color .12s ease; }
+  .win-icon-btn:hover{ background:rgba(0,0,0,0.06); color:var(--ink); }
+  .win-icon-btn.pinned{ color:var(--dot, var(--accent)); }
+
+  .win-toolbar{ display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(0,0,0,0.05); flex-wrap:wrap; position:relative; z-index:2; }
+
+  .select-mini{
+    appearance:none; -webkit-appearance:none;
+    background:rgba(255,255,255,0.7);
+    border:1px solid rgba(0,0,0,0.08);
+    border-radius:8px;
+    padding:6px 24px 6px 10px;
+    font-family:inherit; font-size:12px; font-weight:600; color:var(--ink-soft);
+    cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2355555E' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+  }
+  .select-mini:hover{ background-color:#fff; }
+
+  .icon-trigger{
+    display:flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:8px;
+    border:1px solid rgba(0,0,0,0.08);
+    background:rgba(255,255,255,0.7);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .icon-trigger:hover{ background:#fff; color:var(--ink); }
+
+  .color-trigger{
+    width:26px; height:26px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.9);
+    box-shadow:0 0 0 1px rgba(0,0,0,0.08);
+    background:var(--dot, var(--accent));
+    cursor:pointer; padding:0;
+  }
+
+  .opacity-control{ display:flex; align-items:center; gap:6px; color:var(--ink-faint); }
+  .opacity-control input[type=range]{ width:56px; accent-color: var(--dot, var(--accent)); }
+
+  .toolbar-spacer{ margin-left:auto; display:flex; gap:8px; }
+  .btn{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.08); color:var(--ink-soft);
+    border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:600; font-family:inherit;
+    cursor:pointer; transition: all .15s ease;
+  }
+  .btn:hover{ background:#fff; color:var(--ink); }
+  .btn.danger:hover{ background:var(--danger-soft); color:var(--danger); }
+  .btn.primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .btn.primary:hover{ background:#000; color:#fff; }
+  .btn.ghost-sm{ background:none; border:none; padding:4px 6px; font-size:11.5px; color:var(--ink-faint); }
+  .btn.ghost-sm:hover{ color:var(--ink); background:rgba(0,0,0,0.05); border-radius:6px; }
+
+  /* generic popover */
+  .popover{
+    position:absolute; top:calc(100% + 6px); left:0;
+    background:#fff; border-radius:var(--radius-md);
+    box-shadow:0 20px 50px rgba(0,0,0,0.22); border:1px solid rgba(0,0,0,0.06);
+    padding:12px; z-index:30; display:none;
+  }
+  .popover.open{ display:block; }
+  .popover-label{ font-size:10.5px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
+
+  .swatch-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-bottom:10px; width:190px; }
+  .swatch-grid button{ width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+  .swatch-grid button.selected{ border-color:var(--ink); }
+  .custom-color-row{ display:flex; align-items:center; gap:8px; }
+  .custom-color-row input[type=color]{ width:30px; height:30px; border:none; border-radius:8px; padding:0; background:none; cursor:pointer; }
+  .custom-color-row input[type=text]{ flex:1; border:1px solid #E4E4E8; border-radius:7px; padding:6px 8px; font-size:12px; font-family:inherit; color:var(--ink); outline:none; }
+  .custom-color-row input[type=text]:focus{ border-color:var(--accent); }
+
+  .bg-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:186px; margin-bottom:8px; }
+  .bg-option{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    border:2px solid transparent; border-radius:10px; padding:6px; cursor:pointer; background:none; position:relative;
+  }
+  .bg-option.selected{ border-color:var(--ink); }
+  .bg-swatch{ width:48px; height:34px; border-radius:7px; border:1px solid rgba(0,0,0,0.08); background-size:cover; background-position:center; }
+  .bg-swatch.placeholder{ display:flex; align-items:center; justify-content:center; border:1.5px dashed #C9C9D2; color:#B4B4BE; background:#FAFAFB; }
+  .bg-option span{ font-size:10px; font-weight:600; color:var(--ink-soft); }
+  .bg-photo-actions{ display:flex; justify-content:center; gap:4px; margin-top:2px; }
+
+  .sticker-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:4px; width:190px; margin-bottom:8px; }
+  .sticker-grid button{
+    width:28px; height:28px; font-size:18px; border:none; background:none; cursor:pointer; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .sticker-grid button:hover{ background:rgba(0,0,0,0.06); }
+  .upload-btn{
+    display:flex; align-items:center; justify-content:center; gap:6px; width:100%;
+    background:#F5F5F7; border:1px dashed #C9C9D2; border-radius:8px; padding:8px;
+    font-size:11.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; font-family:inherit;
+  }
+  .upload-btn:hover{ background:#EFEFF2; color:var(--ink); }
+
+  /* ---------- format toolbar ---------- */
+  .format-toolbar{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; padding:8px 14px; border-bottom:1px solid rgba(0,0,0,0.05); position:relative; z-index:2; }
+  .fbtn{
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:7px; border:none; background:transparent;
+    color:var(--ink-soft); cursor:pointer; transition: background .12s ease, color .12s ease;
+  }
+  .fbtn:hover{ background:rgba(0,0,0,0.06); color:var(--ink); }
+  .fbtn.active{ background:var(--dot, var(--accent)); color:#fff; }
+  .fdivider{ width:1px; height:18px; background:rgba(0,0,0,0.08); margin:0 4px; }
+
+  .win-body{ position:relative; padding:22px 26px 20px; display:flex; flex-direction:column; gap:12px; z-index:1; }
+  .title-input{
+    border:none; background:transparent; outline:none;
+    font-weight:700; font-size:21px; letter-spacing:-0.015em; color:var(--ink); width:100%;
+    font-family: var(--note-font, 'Pretendard', sans-serif);
+  }
+  .title-input::placeholder{ color:var(--ink-faint); }
+  .content-input{
+    outline:none; min-height:260px;
+    font-size:15px; line-height:1.75; letter-spacing:-0.003em; color:var(--ink); font-weight:400;
+    font-family: var(--note-font, 'Pretendard', sans-serif);
+  }
+  .content-input:empty::before{ content: attr(data-placeholder); color:var(--ink-faint); }
+  .content-input ol, .content-input ul{ padding-left:22px; margin:6px 0; }
+  .content-input img{ max-width:100%; border-radius:10px; display:block; margin:10px 0; cursor:pointer; }
+  .content-input img.img-selected{ outline:2px solid var(--dot, var(--accent)); outline-offset:2px; }
+
+  .img-size-panel{
+    position:absolute; z-index:12;
+    display:flex; align-items:center; gap:8px;
+    background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:999px;
+    padding:6px 12px; box-shadow:0 12px 30px rgba(0,0,0,0.18);
+  }
+  .img-size-label{ font-size:11px; font-weight:700; color:var(--ink-soft); white-space:nowrap; }
+  .img-size-panel input[type=range]{ width:120px; accent-color:var(--dot, var(--accent)); }
+  .img-size-reset{
+    border:none; background:rgba(0,0,0,0.06); color:var(--ink-soft);
+    font-size:10.5px; font-weight:700; border-radius:999px; padding:4px 9px; cursor:pointer;
+  }
+  .img-size-reset:hover{ background:rgba(0,0,0,0.1); color:var(--ink); }
+
+  .palette-swatch-wrap{ position:relative; width:22px; height:22px; }
+  .palette-swatch-wrap button.swatch{
+    width:100%; height:100%; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;
+  }
+  .palette-swatch-wrap .swatch-remove{
+    position:absolute; top:-6px; right:-6px; width:13px; height:13px; border-radius:50%;
+    background:var(--danger); color:#fff; font-size:8px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .15s ease; line-height:1;
+  }
+  .palette-swatch-wrap:hover .swatch-remove{ opacity:1; }
+  .palette-empty{ font-size:11px; color:var(--ink-faint); grid-column:1/-1; padding:4px 0; }
+
+  .shadow-toggle{
+    position:relative; width:34px; height:19px; border-radius:999px;
+    background:rgba(0,0,0,0.15); border:none; cursor:pointer; padding:0; flex-shrink:0;
+    transition: background .15s ease;
+  }
+  .shadow-toggle.on{ background:var(--dot, var(--accent)); }
+  .shadow-toggle-knob{
+    position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3);
+    transition: transform .15s ease;
+  }
+  .shadow-toggle.on .shadow-toggle-knob{ transform: translateX(15px); }
+  .content-input li{ margin-bottom:4px; }
+  .meta-row{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--ink-faint); border-top:1px solid rgba(0,0,0,0.06); padding-top:12px; font-weight:500; }
+
+  /* sticker layer */
+  .sticker-layer{ position:absolute; inset:0; pointer-events:none; z-index:5; overflow:visible; }
+  .sticker{
+    position:absolute; font-size:30px; line-height:1;
+    transform:translate(-50%,-50%);
+    pointer-events:auto; cursor:grab;
+    user-select:none; -webkit-user-select:none;
+    touch-action:none;
+  }
+  .sticker.image-sticker{ display:block; }
+  .sticker.image-sticker img{
+    width:100%; height:100%; display:block; pointer-events:none;
+  }
+  .sticker:active{ cursor:grabbing; }
+  .sticker .remove{
+    position:absolute; top:-8px; right:-8px;
+    width:16px; height:16px; border-radius:50%;
+    background:var(--danger); color:#fff; font-size:9px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .15s ease; line-height:1; z-index:2;
+  }
+  .sticker:hover .remove{ opacity:1; }
+  .sticker .resize-handle{
+    position:absolute; bottom:-7px; right:-7px;
+    width:16px; height:16px; border-radius:50%;
+    background:#fff; border:2px solid var(--dot, var(--accent));
+    cursor:nwse-resize; opacity:0; transition:opacity .15s ease; z-index:2;
+  }
+  .sticker:hover .resize-handle{ opacity:1; }
+  .sticker .rotate-handle{
+    position:absolute; top:-7px; left:-7px;
+    width:16px; height:16px; border-radius:50%;
+    background:#fff; border:2px solid var(--dot, var(--accent));
+    color:var(--dot, var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    cursor:grab; opacity:0; transition:opacity .15s ease; z-index:2;
+  }
+  .sticker:hover .rotate-handle{ opacity:1; }
+  .sticker .rotate-handle:active{ cursor:grabbing; }
+  .sticker .rotate-handle{
+    position:absolute; top:-18px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%;
+    background:#fff; border:2px solid var(--dot, var(--accent));
+    color:var(--dot, var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    cursor:grab; opacity:0; transition:opacity .15s ease; z-index:2;
+  }
+  .sticker:hover .rotate-handle{ opacity:1; }
+
+  .min-pill{
+    display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.75);
+    backdrop-filter: blur(18px) saturate(180%); border:1px solid var(--glass-border);
+    border-radius:999px; padding:9px 14px 9px 10px; box-shadow:var(--shadow-dock);
+    cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink-soft);
+  }
+  .min-pill span.dot{ width:8px;height:8px;border-radius:50%; background:var(--dot, var(--accent)); }
+
+  .no-note{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:var(--ink-soft); text-align:center; padding:60px 30px;
+    background:rgba(255,255,255,0.5); backdrop-filter: blur(20px);
+    border:1px solid var(--glass-border); border-radius:var(--radius-lg);
+    width:100%; max-width:640px;
+  }
+  .no-note h3{ font-size:14.5px; font-weight:700; margin:0; }
+  .no-note p{ margin:0; font-size:12.5px; color:var(--ink-faint); }
+
+  /* ================= MODAL ================= */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,20,30,0.45); backdrop-filter: blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:100; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    background:#fff; border-radius:var(--radius-lg); padding:20px; max-width:420px; width:100%;
+    box-shadow:0 30px 70px rgba(0,0,0,0.35);
+    transform: scale(0.95) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .modal-overlay.open .modal-box{ transform: scale(1) translateY(0); }
+  .modal-box h4{ margin:0 0 14px; font-size:14px; font-weight:700; text-align:center; }
+  .capture-preview{ width:100%; border-radius:var(--radius-md); margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.14); }
+  .modal-actions{ display:flex; gap:8px; }
+  .modal-actions .btn{ flex:1; justify-content:center; }
+  .capture-loading{ text-align:center; padding:40px 0; color:var(--ink-soft); font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .spinner{ width:20px; height:20px; border-radius:50%; border:2.5px solid #eee; border-top-color:var(--accent); animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  @media (max-width: 780px){
+    .shell{ grid-template-columns:1fr; grid-template-rows:auto 1fr; padding:14px; gap:12px; }
+    .dock{ max-height:220px; }
+    .main{ padding-top:0; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+
+  .window.capture-preview .win-titlebar,
+  .window.capture-preview .win-toolbar,
+  .window.capture-preview .format-toolbar{ display:none; }
+
+  .capture-preview-bar{
+    display:none;
+    align-items:center; gap:10px;
+    width:100%; max-width:640px;
+    margin-bottom:14px;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(18px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    padding:10px 14px;
+    box-shadow:var(--shadow-dock);
+  }
+  .capture-preview-bar.open{ display:flex; }
+  .capture-preview-bar span{ font-size:12px; font-weight:600; color:var(--ink-soft); margin-right:auto; }
+
+  .window.capture-mode .win-toolbar,
+  .window.capture-mode .format-toolbar,
+  .window.capture-mode .win-icon-btn{ display:none !important; }
+  .window.capture-mode .win-titlebar{ border-bottom:none; }
+  .window.capture-mode .sticker .remove,
+  .window.capture-mode .sticker .resize-handle,
+  .window.capture-mode .sticker .rotate-handle{ display:none !important; }
+
+  .capture-bar{
+    display:none; align-items:center; gap:12px;
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:rgba(255,255,255,0.92);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:10px 10px 10px 16px;
+    box-shadow:var(--shadow-dock);
+    z-index:60;
+  }
+  .capture-bar.open{ display:flex; }
+  .capture-bar-label{ font-size:12.5px; font-weight:600; color:var(--ink-soft); white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div class="desktop"></div>
+
+<div class="shell">
+  <div class="dock">
+    <div class="brand"><div class="brand-dot"></div><span class="brand-name">Memo</span></div>
+    <button class="new-btn" id="newNoteBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      새 메모
+    </button>
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search" id="searchInput" placeholder="검색">
+    </div>
+    <div class="dock-label">모든 메모</div>
+    <div class="note-list" id="noteList"></div>
+  </div>
+
+  <div class="main" id="mainArea"></div>
+</div>
+
+<button class="icon-trigger" id="pageBgTrigger" title="페이지 배경" style="position:fixed; top:24px; right:24px; z-index:40; width:36px; height:36px; background:rgba(255,255,255,0.55); backdrop-filter:blur(16px);">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 15 5-5 4 4 5-5 4 4"/></svg>
+</button>
+<div class="popover" id="pageBgPopover" style="position:fixed; top:64px; right:24px; left:auto; z-index:40;">
+  <div class="popover-label">배경 그라디언트</div>
+  <div class="bg-grid" id="pageGradientGrid" style="grid-template-columns:repeat(2,1fr); width:150px;"></div>
+  <div class="popover-label" style="margin-top:10px;">배경 사진</div>
+  <div id="pageBgPhotoArea" style="width:220px;"></div>
+  <input type="file" id="pageBgFileInput" accept="image/*" hidden>
+</div>
+
+<div class="capture-bar" id="captureBar">
+  <span class="capture-bar-label">스티커 위치를 조정한 뒤 캡처하세요</span>
+  <button class="btn" id="cancelCaptureBtn">취소</button>
+  <button class="btn primary" id="confirmCaptureBtn">캡처하기</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box"><h4 id="modalTitle">캡처 완료</h4><div id="modalContent"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(async function(){
+  const THEME_PRESETS = ['#5B5FEF','#F2A73B','#F0596A','#22B07D','#0EA5E9','#8B5CF6','#64748B','#1B1B1F'];
+
+  const FONT_OPTIONS = [
+    { label:'Pretendard', value:"'Pretendard','Noto Sans KR',sans-serif" },
+    { label:'노토 산스',   value:"'Noto Sans KR',sans-serif" },
+    { label:'나눔고딕',    value:"'Nanum Gothic',sans-serif" },
+    { label:'IBM 플렉스',  value:"'IBM Plex Sans KR',sans-serif" },
+    { label:'KoPub 돋움',  value:"'KoPub Dotum','Noto Sans KR',sans-serif" },
+    { label:'KoPub 바탕',  value:"'KoPub Batang','Noto Serif KR',serif" },
+    { label:'고운바탕',    value:"'Gowun Batang',serif" },
+    { label:'노토 세리프', value:"'Noto Serif KR',serif" }
+  ];
+
+  const FONT_SIZES = [13, 15, 17, 19, 22, 26, 32];
+
+  const TEXT_COLOR_PRESETS = ['#1B1B1F','#E5484D','#F2A73B','#EAB308','#22B07D','#0EA5E9','#5B5FEF','#8B5CF6','#EC4899','#64748B'];
+
+  const BG_STYLES = [
+    { key:'glass',    label:'유리' },
+    { key:'solid',    label:'솔리드' },
+    { key:'gradient', label:'그라디언트' },
+    { key:'dots',     label:'도트' },
+    { key:'grid',     label:'그리드' },
+    { key:'photo',    label:'사진' }
+  ];
+
+  const GRADIENT_PRESETS = [
+    { name:'라벤더', colors:['#A9B4FF','#FFC9DE','#B7F0D6','#FFE3AE'], base:['#DCE0F7','#EFE7F4','#E4F1EA'] },
+    { name:'선셋',   colors:['#FFB199','#FFD97D','#FF8FA3','#FFE29A'], base:['#FFE8D6','#FFF3E0','#FFE0E6'] },
+    { name:'오션',   colors:['#8ED1FC','#A0E7E5','#B4C5FF','#C4FCEF'], base:['#DDF3FF','#E7F6F8','#E3EAFB'] },
+    { name:'모노',   colors:['#D8D8DE','#E8E8ED','#CFCFD6','#EFEFF2'], base:['#EDEDF0','#F4F4F6','#E9E9ED'] }
+  ];
+
+  function gradientCss(preset){
+    const [c1,c2,c3,c4] = preset.colors;
+    const [b1,b2,b3] = preset.base;
+    return `radial-gradient(circle at 15% 20%, ${c1} 0%, transparent 42%), radial-gradient(circle at 85% 15%, ${c2} 0%, transparent 45%), radial-gradient(circle at 75% 85%, ${c3} 0%, transparent 45%), radial-gradient(circle at 20% 85%, ${c4} 0%, transparent 40%), linear-gradient(160deg, ${b1} 0%, ${b2} 50%, ${b3} 100%)`;
+  }
+
+  let pageBg = { mode:'gradient', gradientIndex:0, photo:null, blur:22 };
+
+  // ---------- Electron desktop-app autosave (no-op in browser/artifact) ----------
+  const isElectronApp = typeof window !== 'undefined' && !!window.electronAPI;
+  let autosaveTimer = null;
+
+  async function flushSave(){
+    if(!isElectronApp) return;
+    try{
+      const payload = JSON.stringify({ notes, pageBg, selectedId, customPalette });
+      await window.electronAPI.saveData(payload);
+    }catch(err){ /* ignore */ }
+  }
+  function scheduleAutosave(){
+    if(!isElectronApp) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(flushSave, 500);
+  }
+  if(isElectronApp){
+    window.__memoFlushSave = async function(){
+      clearTimeout(autosaveTimer);
+      await flushSave();
+      return true;
+    };
+    setInterval(flushSave, 2000);
+  }
+
+  function applyPageBackground(){
+    const el = document.querySelector('.desktop');
+    if(pageBg.mode === 'photo' && pageBg.photo){
+      el.style.backgroundImage = `url("${pageBg.photo}")`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.filter = `blur(${pageBg.blur}px) saturate(112%)`;
+    } else {
+      el.style.backgroundImage = gradientCss(GRADIENT_PRESETS[pageBg.gradientIndex]);
+      el.style.backgroundSize = '';
+      el.style.backgroundPosition = '';
+      el.style.filter = 'blur(60px) saturate(115%)';
+    }
+    scheduleAutosave();
+  }
+
+  let customPalette = [];
+
+  let notes = [
+    {
+      id: cryptoId(),
+      title: 'Memo에 오신 걸 환영해요',
+      content: '스티커 팝오버에서 이모지를 붙이거나, <b>내 사진</b>을 업로드해 포토 스티커로 붙여보세요.<br><br>배경 설정에서도 사진을 업로드해 나만의 배경으로 바꿀 수 있어요.',
+      color: '#5B5FEF',
+      font: FONT_OPTIONS[0].value,
+      pinned: true,
+      glass: 0.72,
+      bgStyle: 'glass',
+      bgImage: null,
+      stickers: [],
+      updatedAt: Date.now()
+    }
+  ];
+  let selectedId = notes[0].id;
+  let searchTerm = '';
+  let minimizedIds = new Set();
+  let openPopover = null; // 'color' | 'bg' | 'sticker' | null
+
+  function cryptoId(){ return 'n' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+  function formatDate(ts){
+    const d = new Date(ts);
+    const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${y}.${String(m).padStart(2,'0')}.${String(day).padStart(2,'0')} ${hh}:${mm}`;
+  }
+
+  function getSelectedNote(){ return notes.find(n => n.id === selectedId); }
+  function escapeHtml(str){ const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+  function escapeAttr(str){ return (str || '').replace(/"/g, '&quot;'); }
+  function stripTags(html){ const div = document.createElement('div'); div.innerHTML = html || ''; return div.textContent || ''; }
+
+  function hexToRgb(hex){
+    const m = hex.replace('#','');
+    const bigint = parseInt(m.length === 3 ? m.split('').map(c=>c+c).join('') : m, 16);
+    return { r:(bigint>>16)&255, g:(bigint>>8)&255, b:bigint&255 };
+  }
+
+  function readFileAsDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadImageSize(dataUrl){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+      img.onerror = () => resolve({ w: 1, h: 1 });
+      img.src = dataUrl;
+    });
+  }
+
+  function computeBaseSize(naturalW, naturalH, maxDim){
+    maxDim = maxDim || 76;
+    if(naturalW >= naturalH){
+      return { baseW: maxDim, baseH: maxDim * (naturalH / naturalW) };
+    }
+    return { baseH: maxDim, baseW: maxDim * (naturalW / naturalH) };
+  }
+
+  function renderList(){
+    const listEl = document.getElementById('noteList');
+    const filtered = notes
+      .slice()
+      .sort((a,b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt))
+      .filter(n => {
+        if(!searchTerm) return true;
+        const t = (n.title + ' ' + stripTags(n.content)).toLowerCase();
+        return t.includes(searchTerm.toLowerCase());
+      });
+
+    if(filtered.length === 0){
+      listEl.innerHTML = `<div class="empty-list">메모가 없어요<br>새 메모를 만들어보세요</div>`;
+      scheduleAutosave();
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(n => {
+      const snippet = stripTags(n.content).replace(/\n/g,' ') || '내용 없음';
+      const activeClass = n.id === selectedId ? 'active' : '';
+      const pinIcon = n.pinned ? `<span class="pin-mark"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 9 9l-6 1 4.5 4L6 21l6-4 6 4-1.5-7L21 10l-6-1z"/></svg></span>` : '';
+      return `
+        <div class="note-item ${activeClass}" style="--dot:${n.color}" data-id="${n.id}">
+          <div class="note-top"><span class="tag-dot"></span><h3>${escapeHtml(n.title || '제목 없음')}</h3>${pinIcon}</div>
+          <p>${escapeHtml(snippet)}</p>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.note-item').forEach(el => {
+      el.addEventListener('click', () => {
+        selectedId = el.dataset.id;
+        openPopover = null;
+        renderList();
+        renderMain();
+      });
+    });
+    scheduleAutosave();
+  }
+
+  function buildCardBackground(note){
+    const { r, g, b } = hexToRgb(note.color);
+    const alpha = note.glass ?? 0.72;
+    const overlay = `linear-gradient(rgba(255,255,255,${alpha}), rgba(255,255,255,${alpha}))`;
+
+    let images = [overlay];
+    let sizes = ['100% 100%'];
+    let repeats = ['no-repeat'];
+    let positions = ['0 0'];
+
+    if(note.bgStyle === 'photo' && note.bgImage){
+      images.push(`url("${note.bgImage}")`);
+      sizes.push('cover'); repeats.push('no-repeat'); positions.push('center');
+    } else {
+      switch(note.bgStyle){
+        case 'solid':
+          images.push(`linear-gradient(rgba(${r},${g},${b},0.16), rgba(${r},${g},${b},0.16))`);
+          sizes.push('100% 100%'); repeats.push('no-repeat'); positions.push('0 0');
+          break;
+        case 'gradient':
+          images.push(`linear-gradient(135deg, rgba(${r},${g},${b},0.30), rgba(255,255,255,0))`);
+          sizes.push('100% 100%'); repeats.push('no-repeat'); positions.push('0 0');
+          break;
+        case 'dots':
+          images.push(`radial-gradient(rgba(${r},${g},${b},0.45) 1.6px, transparent 1.7px)`);
+          sizes.push('18px 18px'); repeats.push('repeat'); positions.push('0 0');
+          break;
+        case 'grid':
+          images.push(`repeating-linear-gradient(0deg, rgba(${r},${g},${b},0.22) 0, rgba(${r},${g},${b},0.22) 1px, transparent 1px, transparent 24px)`);
+          images.push(`repeating-linear-gradient(90deg, rgba(${r},${g},${b},0.22) 0, rgba(${r},${g},${b},0.22) 1px, transparent 1px, transparent 24px)`);
+          sizes.push('24px 24px','24px 24px'); repeats.push('repeat','repeat'); positions.push('0 0','0 0');
+          break;
+        case 'glass':
+        default:
+          break;
+      }
+    }
+    return {
+      backgroundImage: images.join(','),
+      backgroundSize: sizes.join(','),
+      backgroundRepeat: repeats.join(','),
+      backgroundPosition: positions.join(',')
+    };
+  }
+
+  function applyCardBackground(cardEl, note){
+    const bg = buildCardBackground(note);
+    cardEl.style.backgroundImage = bg.backgroundImage;
+    cardEl.style.backgroundSize = bg.backgroundSize;
+    cardEl.style.backgroundRepeat = bg.backgroundRepeat;
+    cardEl.style.backgroundPosition = bg.backgroundPosition;
+  }
+
+  function previewBg(styleKey, colorHex, bgImage){
+    const { r, g, b } = hexToRgb(colorHex);
+    switch(styleKey){
+      case 'solid': return `rgb(${Math.round(r*0.25+255*0.75)},${Math.round(g*0.25+255*0.75)},${Math.round(b*0.25+255*0.75)})`;
+      case 'gradient': return `linear-gradient(135deg, rgba(${r},${g},${b},0.55), #ffffff)`;
+      case 'dots': return `radial-gradient(rgba(${r},${g},${b},0.6) 20%, #ffffff 21%) 0 0/8px 8px, #ffffff`;
+      case 'grid': return `repeating-linear-gradient(0deg, rgba(${r},${g},${b},0.5) 0 1px, transparent 1px 6px), #ffffff`;
+      case 'photo': return bgImage ? `url("${bgImage}")` : null;
+      case 'glass':
+      default: return `rgba(255,255,255,0.85)`;
+    }
+  }
+
+  function renderMain(){
+    const wrap = document.getElementById('mainArea');
+    const note = getSelectedNote();
+
+    if(!note){
+      wrap.innerHTML = `<div class="no-note"><h3>펼쳐진 메모가 없어요</h3><p>왼쪽에서 메모를 선택하거나 새로 만들어보세요</p></div>`;
+      return;
+    }
+
+    if(minimizedIds.has(note.id)){
+      wrap.innerHTML = `
+        <div class="min-pill" id="restoreBtn" style="--dot:${note.color}">
+          <span class="dot"></span>${escapeHtml(note.title || '제목 없음')} 펼치기
+        </div>
+      `;
+      document.getElementById('restoreBtn').addEventListener('click', () => { minimizedIds.delete(note.id); renderMain(); });
+      return;
+    }
+
+    if(!note.bgStyle) note.bgStyle = 'glass';
+    if(!note.stickers) note.stickers = [];
+
+    wrap.innerHTML = `
+      <div class="window" id="card" style="--dot:${note.color}; --note-font:${note.font};">
+        <div class="win-titlebar">
+          <div class="win-dots"><span></span><span></span><span></span></div>
+          <div class="win-title">${escapeHtml(note.title || '제목 없음')}</div>
+          <button class="win-icon-btn ${note.pinned ? 'pinned' : ''}" id="pinBtn" title="고정">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${note.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2 9 9l-6 1 4.5 4L6 21l6-4 6 4-1.5-7L21 10l-6-1z"/></svg>
+          </button>
+          <button class="win-icon-btn" id="minimizeBtn" title="최소화">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>
+          </button>
+        </div>
+
+        <div class="win-toolbar">
+          <button class="color-trigger" id="colorTrigger" title="테마 컬러" style="--dot:${note.color}"></button>
+          <div class="popover" id="colorPopover" style="left:14px;">
+            <div class="popover-label">테마 컬러</div>
+            <div class="swatch-grid" id="swatchGrid">
+              ${THEME_PRESETS.map(c => `<button style="background:${c}" data-color="${c}" class="${c.toLowerCase() === note.color.toLowerCase() ? 'selected' : ''}"></button>`).join('')}
+            </div>
+            <div class="custom-color-row">
+              <input type="color" id="customColorInput" value="${note.color}">
+              <input type="text" id="customColorText" value="${note.color}" maxlength="7">
+            </div>
+          </div>
+
+          <button class="icon-trigger" id="bgTrigger" title="배경 설정">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 15 5-5 4 4 5-5 4 4"/></svg>
+          </button>
+          <div class="popover" id="bgPopover" style="left:44px;">
+            <div class="popover-label">배경 스타일</div>
+            <div class="bg-grid" id="bgGrid"></div>
+            <input type="file" id="bgFileInput" accept="image/*" hidden>
+            <div id="bgPhotoActions"></div>
+          </div>
+
+          <button class="icon-trigger" id="stickerTrigger" title="스티커">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8 15c1.2 1 2.6 1.5 4 1.5s2.8-.5 4-1.5"/></svg>
+          </button>
+          <div class="popover" id="stickerPopover" style="left:44px;">
+            <div class="popover-label">포토 스티커</div>
+            <button class="upload-btn" id="stickerUploadBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              사진 업로드
+            </button>
+            <input type="file" id="stickerFileInput" accept="image/*" hidden>
+            <div class="popover-label" style="margin-top:12px; display:flex; align-items:center; justify-content:space-between;">
+              <span>스티커 그림자</span>
+              <button id="stickerShadowToggle" class="shadow-toggle ${note.stickerShadow !== false ? 'on' : ''}" title="그림자 on/off">
+                <span class="shadow-toggle-knob"></span>
+              </button>
+            </div>
+          </div>
+
+          <select class="select-mini" id="fontSelect" title="폰트">
+            ${FONT_OPTIONS.map(f => `<option value="${escapeAttr(f.value)}" ${f.value === note.font ? 'selected' : ''}>${f.label}</option>`).join('')}
+          </select>
+
+          <div class="opacity-control" title="투명도">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none"/></svg>
+            <input type="range" id="glassSlider" min="0.15" max="1" step="0.01" value="${note.glass ?? 0.72}">
+          </div>
+
+          <div class="toolbar-spacer">
+            <button class="btn danger" id="deleteBtn">삭제</button>
+            <button class="btn primary" id="captureBtn">캡처</button>
+          </div>
+        </div>
+
+        <div class="format-toolbar">
+          <select class="select-mini" id="fontSizeSelect" title="글씨 크기">
+            ${FONT_SIZES.map(s => `<option value="${s}" ${s===15?'selected':''}>${s}px</option>`).join('')}
+          </select>
+          <div class="fdivider"></div>
+          <button class="fbtn" id="boldBtn" title="굵게"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 4h6a4 4 0 0 1 0 8H6zM6 12h7a4 4 0 0 1 0 8H6z"/></svg></button>
+          <button class="fbtn" id="italicBtn" title="기울임"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M19 4h-9M5 20h9M15 4 9 20"/></svg></button>
+          <div class="fdivider"></div>
+          <button class="fbtn" id="olBtn" title="번호 매기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M4.5 14a1.5 1.5 0 0 1 3 0c0 .8-.6 1.3-1.2 1.9L4 18h3.5"/></svg></button>
+          <button class="fbtn" id="ulBtn" title="글머리 기호"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 6h11M10 12h11M10 18h11"/><circle cx="4.5" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+          <div class="fdivider"></div>
+          <button class="fbtn" id="alignLeftBtn" title="왼쪽 정렬"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg></button>
+          <button class="fbtn" id="alignCenterBtn" title="가운데 정렬"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M5.5 18h13"/></svg></button>
+          <button class="fbtn" id="alignRightBtn" title="오른쪽 정렬"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M10 12h10M7 18h13"/></svg></button>
+          <div class="fdivider"></div>
+          <button class="fbtn" id="insertImageTrigger" title="사진 삽입">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          </button>
+          <input type="file" id="insertImageFileInput" accept="image/*" hidden>
+          <div class="fdivider"></div>
+          <button class="fbtn" id="textColorTrigger" title="글씨 색상" style="position:relative;">
+            <span style="font-size:12px; font-weight:800; line-height:1;">A</span>
+            <span id="textColorBar" style="position:absolute; bottom:5px; left:6px; right:6px; height:3px; border-radius:2px; background:#1B1B1F;"></span>
+          </button>
+          <div class="popover" id="textColorPopover" style="left:auto; right:0; width:210px;">
+            <div class="popover-label">글씨 색상</div>
+            <div class="swatch-grid" id="textColorGrid">
+              ${TEXT_COLOR_PRESETS.map(c => `<button style="background:${c}" data-color="${c}"></button>`).join('')}
+            </div>
+            <div class="custom-color-row">
+              <input type="color" id="textColorCustomInput" value="#1B1B1F">
+              <input type="text" id="textColorCustomText" value="#1B1B1F" maxlength="7">
+            </div>
+            <div class="popover-label" style="margin-top:12px; display:flex; align-items:center; justify-content:space-between;">
+              <span>내 팔레트</span>
+              <button id="addToPaletteBtn" title="현재 색을 팔레트에 추가" style="border:none; background:rgba(0,0,0,0.06); color:var(--ink-soft); border-radius:6px; padding:3px 8px; font-size:10.5px; font-weight:700; cursor:pointer;">+ 추가</button>
+            </div>
+            <div class="swatch-grid" id="customPaletteGrid" style="width:100%;"></div>
+          </div>
+        </div>
+
+        <div class="win-body">
+          <input class="title-input" id="titleInput" placeholder="제목 없음" value="${escapeAttr(note.title)}">
+          <div class="content-input" id="contentInput" contenteditable="true" data-placeholder="메모를 입력하세요...">${note.content}</div>
+          <div class="meta-row">
+            <span>마지막 수정 · ${formatDate(note.updatedAt)}</span>
+            <span>Memo</span>
+          </div>
+        </div>
+
+        <div class="sticker-layer" id="stickerLayer"></div>
+      </div>
+    `;
+
+    const cardEl = document.getElementById('card');
+    applyCardBackground(cardEl, note);
+    renderBgGrid(note);
+    renderStickerLayer(note);
+
+    if(openPopover){
+      const el = document.getElementById(openPopover + 'Popover');
+      if(el) el.classList.add('open');
+    }
+
+    bindEditorEvents(note);
+  }
+
+  function renderBgGrid(note){
+    const grid = document.getElementById('bgGrid');
+    const actions = document.getElementById('bgPhotoActions');
+    if(!grid) return;
+
+    grid.innerHTML = BG_STYLES.map(s => {
+      const isPhoto = s.key === 'photo';
+      const selected = s.key === note.bgStyle;
+      const bgVal = previewBg(s.key, note.color, note.bgImage);
+      const swatchStyle = isPhoto && !note.bgImage
+        ? ''
+        : `style="background:${bgVal}"`;
+      const placeholderClass = (isPhoto && !note.bgImage) ? 'placeholder' : '';
+      const placeholderContent = (isPhoto && !note.bgImage)
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`
+        : '';
+      return `
+        <button class="bg-option ${selected ? 'selected' : ''}" data-bg="${s.key}">
+          <span class="bg-swatch ${placeholderClass}" ${swatchStyle}>${placeholderContent}</span>
+          <span>${s.label}</span>
+        </button>
+      `;
+    }).join('');
+
+    if(note.bgStyle === 'photo' && note.bgImage){
+      actions.innerHTML = `
+        <div class="bg-photo-actions">
+          <button class="btn ghost-sm" id="bgChangeBtn">사진 변경</button>
+          <button class="btn ghost-sm" id="bgRemoveBtn">제거</button>
+        </div>
+      `;
+    } else {
+      actions.innerHTML = '';
+    }
+
+    grid.querySelectorAll('.bg-option').forEach(b => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.bg;
+        if(key === 'photo' && !note.bgImage){
+          document.getElementById('bgFileInput').click();
+          return;
+        }
+        note.bgStyle = key;
+        applyCardBackground(document.getElementById('card'), note);
+        renderBgGrid(note);
+        scheduleAutosave();
+      });
+    });
+
+    const changeBtn = document.getElementById('bgChangeBtn');
+    if(changeBtn) changeBtn.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('bgFileInput').click(); });
+    const removeBtn = document.getElementById('bgRemoveBtn');
+    if(removeBtn) removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      note.bgImage = null;
+      note.bgStyle = 'glass';
+      applyCardBackground(document.getElementById('card'), note);
+      renderBgGrid(note);
+      scheduleAutosave();
+    });
+
+    const fileInput = document.getElementById('bgFileInput');
+    fileInput.onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const dataUrl = await readFileAsDataUrl(file);
+      note.bgImage = dataUrl;
+      note.bgStyle = 'photo';
+      applyCardBackground(document.getElementById('card'), note);
+      renderBgGrid(note);
+      scheduleAutosave();
+      fileInput.value = '';
+    };
+  }
+
+  function bindEditorEvents(note){
+    const titleInput = document.getElementById('titleInput');
+    const contentInput = document.getElementById('contentInput');
+    const cardEl = document.getElementById('card');
+
+    titleInput.addEventListener('input', (e) => {
+      note.title = e.target.value; note.updatedAt = Date.now();
+      document.querySelector('.win-title').textContent = note.title || '제목 없음';
+      renderList();
+    });
+
+    contentInput.addEventListener('input', () => {
+      note.content = contentInput.innerHTML; note.updatedAt = Date.now(); renderList();
+    });
+
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      openModal(`
+        <p style="font-size:13px;color:var(--ink-soft); margin:0 0 16px; line-height:1.6;">이 메모를 삭제할까요? 되돌릴 수 없어요.</p>
+        <div class="modal-actions">
+          <button class="btn" id="cancelDeleteBtn">취소</button>
+          <button class="btn danger" id="confirmDeleteBtn" style="background:var(--danger); color:#fff; border-color:var(--danger);">삭제</button>
+        </div>
+      `, '메모 삭제');
+      document.getElementById('cancelDeleteBtn').addEventListener('click', closeModal);
+      document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+        notes = notes.filter(n => n.id !== note.id);
+        minimizedIds.delete(note.id);
+        selectedId = notes.length ? notes.slice().sort((a,b)=>b.updatedAt-a.updatedAt)[0].id : null;
+        openPopover = null;
+        closeModal();
+        renderList(); renderMain();
+      });
+    });
+    document.getElementById('captureBtn').addEventListener('click', () => enterCapturePreview());
+    document.getElementById('pinBtn').addEventListener('click', () => { note.pinned = !note.pinned; renderList(); renderMain(); });
+    document.getElementById('minimizeBtn').addEventListener('click', () => { minimizedIds.add(note.id); renderMain(); });
+
+    document.getElementById('glassSlider').addEventListener('input', (e) => {
+      note.glass = parseFloat(e.target.value);
+      applyCardBackground(cardEl, note);
+      scheduleAutosave();
+    });
+
+    document.getElementById('fontSelect').addEventListener('change', (e) => {
+      note.font = e.target.value;
+      cardEl.style.setProperty('--note-font', note.font);
+      scheduleAutosave();
+    });
+
+    function togglePopover(name){
+      const popEl = document.getElementById(name + 'Popover');
+      const willOpen = openPopover !== name;
+      document.querySelectorAll('.popover').forEach(p => p.classList.remove('open'));
+      openPopover = willOpen ? name : null;
+      if(willOpen) popEl.classList.add('open');
+    }
+
+    document.getElementById('colorTrigger').addEventListener('click', (e) => { e.stopPropagation(); togglePopover('color'); });
+    document.getElementById('bgTrigger').addEventListener('click', (e) => { e.stopPropagation(); togglePopover('bg'); });
+    document.getElementById('stickerTrigger').addEventListener('click', (e) => { e.stopPropagation(); togglePopover('sticker'); });
+
+    document.addEventListener('click', function outsideClose(e){
+      if(!openPopover) return;
+      const popEl = document.getElementById(openPopover + 'Popover');
+      if(popEl && !popEl.contains(e.target) && !e.target.closest('.color-trigger,.icon-trigger')){
+        popEl.classList.remove('open');
+        openPopover = null;
+      }
+    });
+
+    function applyColor(hex){
+      note.color = hex;
+      cardEl.style.setProperty('--dot', hex);
+      document.getElementById('colorTrigger').style.setProperty('--dot', hex);
+      document.getElementById('customColorInput').value = hex;
+      document.getElementById('customColorText').value = hex;
+      document.getElementById('colorPopover').querySelectorAll('.swatch-grid button').forEach(b => {
+        b.classList.toggle('selected', b.dataset.color.toLowerCase() === hex.toLowerCase());
+      });
+      applyCardBackground(cardEl, note);
+      renderBgGrid(note);
+      renderList();
+    }
+    document.getElementById('swatchGrid').querySelectorAll('button').forEach(b => b.addEventListener('click', () => applyColor(b.dataset.color)));
+    document.getElementById('customColorInput').addEventListener('input', (e) => applyColor(e.target.value));
+    document.getElementById('customColorText').addEventListener('change', (e) => {
+      let v = e.target.value.trim();
+      if(!v.startsWith('#')) v = '#' + v;
+      if(/^#[0-9A-Fa-f]{6}$/.test(v)) applyColor(v);
+      else e.target.value = note.color;
+    });
+
+    // sticker: photo upload
+    const stickerFileInput = document.getElementById('stickerFileInput');
+    document.getElementById('stickerUploadBtn').addEventListener('click', () => stickerFileInput.click());
+    document.getElementById('stickerShadowToggle').addEventListener('click', (e) => {
+      note.stickerShadow = note.stickerShadow === false ? true : false;
+      e.currentTarget.classList.toggle('on', note.stickerShadow !== false);
+      renderStickerLayer(note);
+    });
+    stickerFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const dataUrl = await readFileAsDataUrl(file);
+      const { w, h } = await loadImageSize(dataUrl);
+      const { baseW, baseH } = computeBaseSize(w, h);
+      note.stickers.push({
+        id: cryptoId(), type:'image', src: dataUrl,
+        baseW, baseH, scale: 1,
+        x: 30 + Math.random()*40, y: 15 + Math.random()*20,
+        rot: 0
+      });
+      renderStickerLayer(note);
+      stickerFileInput.value = '';
+    });
+
+    function exec(cmd, value){
+      contentInput.focus();
+      document.execCommand(cmd, false, value);
+      updateFormatState();
+    }
+    document.getElementById('boldBtn').addEventListener('click', () => exec('bold'));
+    document.getElementById('italicBtn').addEventListener('click', () => exec('italic'));
+    document.getElementById('olBtn').addEventListener('click', () => exec('insertOrderedList'));
+    document.getElementById('ulBtn').addEventListener('click', () => exec('insertUnorderedList'));
+    document.getElementById('alignLeftBtn').addEventListener('click', () => exec('justifyLeft'));
+    document.getElementById('alignCenterBtn').addEventListener('click', () => exec('justifyCenter'));
+    document.getElementById('alignRightBtn').addEventListener('click', () => exec('justifyRight'));
+
+    document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
+      const px = e.target.value;
+      contentInput.focus();
+      document.execCommand('fontSize', false, '7');
+      contentInput.querySelectorAll('font[size="7"]').forEach(f => {
+        f.removeAttribute('size');
+        f.style.fontSize = px + 'px';
+      });
+      note.content = contentInput.innerHTML;
+    });
+
+    // ---- text color ----
+    let savedRange = null;
+    function saveSelection(){
+      const sel = window.getSelection();
+      if(sel && sel.rangeCount > 0 && contentInput.contains(sel.anchorNode)){
+        savedRange = sel.getRangeAt(0).cloneRange();
+      }
+    }
+    function restoreSelection(){
+      contentInput.focus();
+      if(savedRange){
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+    }
+    function applyTextColor(hex){
+      restoreSelection();
+      document.execCommand('foreColor', false, hex);
+      document.getElementById('textColorBar').style.background = hex;
+      document.getElementById('textColorCustomInput').value = hex;
+      document.getElementById('textColorCustomText').value = hex;
+      note.content = contentInput.innerHTML;
+      scheduleAutosave();
+    }
+    const textColorTrigger = document.getElementById('textColorTrigger');
+    textColorTrigger.addEventListener('mousedown', (e) => { e.preventDefault(); saveSelection(); });
+    textColorTrigger.addEventListener('click', (e) => { e.stopPropagation(); togglePopover('textColor'); });
+    document.getElementById('textColorGrid').querySelectorAll('button').forEach(b => {
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => applyTextColor(b.dataset.color));
+    });
+    const textColorCustomInput = document.getElementById('textColorCustomInput');
+    textColorCustomInput.addEventListener('input', (e) => applyTextColor(e.target.value));
+    document.getElementById('textColorCustomText').addEventListener('change', (e) => {
+      let v = e.target.value.trim();
+      if(!v.startsWith('#')) v = '#' + v;
+      if(/^#[0-9A-Fa-f]{6}$/.test(v)) applyTextColor(v);
+      else e.target.value = textColorCustomInput.value;
+    });
+
+    // ---- custom color palette ----
+    function renderCustomPaletteGrid(){
+      const grid = document.getElementById('customPaletteGrid');
+      if(!grid) return;
+      if(customPalette.length === 0){
+        grid.innerHTML = `<div class="palette-empty">추가한 색이 없어요</div>`;
+        return;
+      }
+      grid.innerHTML = customPalette.map(hex => `
+        <div class="palette-swatch-wrap">
+          <button class="swatch" style="background:${hex}" data-color="${hex}"></button>
+          <span class="swatch-remove" data-remove="${hex}">✕</span>
+        </div>
+      `).join('');
+      grid.querySelectorAll('button.swatch').forEach(b => {
+        b.addEventListener('mousedown', (e) => e.preventDefault());
+        b.addEventListener('click', () => applyTextColor(b.dataset.color));
+      });
+      grid.querySelectorAll('.swatch-remove').forEach(x => {
+        x.addEventListener('mousedown', (e) => e.preventDefault());
+        x.addEventListener('click', (e) => {
+          e.stopPropagation();
+          customPalette = customPalette.filter(c => c.toLowerCase() !== x.dataset.remove.toLowerCase());
+          renderCustomPaletteGrid();
+          scheduleAutosave();
+        });
+      });
+    }
+    renderCustomPaletteGrid();
+
+    document.getElementById('addToPaletteBtn').addEventListener('mousedown', (e) => e.preventDefault());
+    document.getElementById('addToPaletteBtn').addEventListener('click', () => {
+      const hex = document.getElementById('textColorCustomInput').value;
+      if(!customPalette.some(c => c.toLowerCase() === hex.toLowerCase())){
+        customPalette.push(hex);
+        if(customPalette.length > 24) customPalette.shift();
+        renderCustomPaletteGrid();
+        scheduleAutosave();
+      }
+    });
+
+    // ---- insert image into note body ----
+    const insertImageTrigger = document.getElementById('insertImageTrigger');
+    const insertImageFileInput = document.getElementById('insertImageFileInput');
+    insertImageTrigger.addEventListener('mousedown', (e) => { e.preventDefault(); saveSelection(); });
+    insertImageTrigger.addEventListener('click', (e) => { e.stopPropagation(); insertImageFileInput.click(); });
+    insertImageFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const dataUrl = await readFileAsDataUrl(file);
+      restoreSelection();
+      document.execCommand('insertImage', false, dataUrl);
+      note.content = contentInput.innerHTML;
+      note.updatedAt = Date.now();
+      renderList();
+      scheduleAutosave();
+      insertImageFileInput.value = '';
+    });
+
+    // ---- resize images inserted into the note body ----
+    let selectedBodyImg = null;
+    let imgSizePanel = null;
+
+    function removeImgSizePanel(){
+      if(imgSizePanel){ imgSizePanel.remove(); imgSizePanel = null; }
+      if(selectedBodyImg){ selectedBodyImg.classList.remove('img-selected'); selectedBodyImg = null; }
+    }
+
+    function positionImgSizePanel(img){
+      if(!imgSizePanel) return;
+      const cardRect = cardEl.getBoundingClientRect();
+      const imgRect = img.getBoundingClientRect();
+      let top = imgRect.bottom - cardRect.top + 8;
+      let left = Math.max(8, imgRect.left - cardRect.left);
+      const maxLeft = cardRect.width - imgSizePanel.offsetWidth - 8;
+      if(left > maxLeft) left = Math.max(8, maxLeft);
+      imgSizePanel.style.top = top + 'px';
+      imgSizePanel.style.left = left + 'px';
+    }
+
+    function showImgSizePanel(img){
+      if(imgSizePanel) imgSizePanel.remove();
+      const currentPct = img.style.width && img.style.width.indexOf('%') !== -1
+        ? parseInt(img.style.width, 10)
+        : Math.max(15, Math.min(100, Math.round((img.getBoundingClientRect().width / contentInput.getBoundingClientRect().width) * 100)));
+
+      imgSizePanel = document.createElement('div');
+      imgSizePanel.className = 'img-size-panel';
+      imgSizePanel.innerHTML = `
+        <span class="img-size-label">크기</span>
+        <input type="range" min="15" max="100" step="1" value="${currentPct}" class="img-size-slider">
+        <button class="img-size-reset" type="button">100%</button>
+      `;
+      cardEl.appendChild(imgSizePanel);
+      positionImgSizePanel(img);
+
+      imgSizePanel.querySelector('.img-size-slider').addEventListener('input', (e) => {
+        img.style.width = e.target.value + '%';
+        img.style.height = 'auto';
+        note.content = contentInput.innerHTML;
+        positionImgSizePanel(img);
+        scheduleAutosave();
+      });
+      imgSizePanel.querySelector('.img-size-reset').addEventListener('click', () => {
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        imgSizePanel.querySelector('.img-size-slider').value = 100;
+        note.content = contentInput.innerHTML;
+        positionImgSizePanel(img);
+        scheduleAutosave();
+      });
+    }
+
+    contentInput.addEventListener('click', (e) => {
+      if(e.target.tagName === 'IMG'){
+        if(selectedBodyImg && selectedBodyImg !== e.target) selectedBodyImg.classList.remove('img-selected');
+        selectedBodyImg = e.target;
+        selectedBodyImg.classList.add('img-selected');
+        showImgSizePanel(selectedBodyImg);
+      } else {
+        removeImgSizePanel();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if(imgSizePanel && !imgSizePanel.contains(e.target) && e.target.tagName !== 'IMG'){
+        removeImgSizePanel();
+      }
+    });
+
+    function updateFormatState(){
+      try{
+        document.getElementById('boldBtn').classList.toggle('active', document.queryCommandState('bold'));
+        document.getElementById('italicBtn').classList.toggle('active', document.queryCommandState('italic'));
+        document.getElementById('olBtn').classList.toggle('active', document.queryCommandState('insertOrderedList'));
+        document.getElementById('ulBtn').classList.toggle('active', document.queryCommandState('insertUnorderedList'));
+        document.getElementById('alignLeftBtn').classList.toggle('active', document.queryCommandState('justifyLeft'));
+        document.getElementById('alignCenterBtn').classList.toggle('active', document.queryCommandState('justifyCenter'));
+        document.getElementById('alignRightBtn').classList.toggle('active', document.queryCommandState('justifyRight'));
+      }catch(err){}
+    }
+    contentInput.addEventListener('keyup', updateFormatState);
+    contentInput.addEventListener('mouseup', updateFormatState);
+    contentInput.addEventListener('focus', updateFormatState);
+  }
+
+  function renderStickerLayer(note){
+    const layer = document.getElementById('stickerLayer');
+    if(!layer) return;
+    const shadowOn = note.stickerShadow !== false;
+    const shadowStyle = shadowOn ? 'filter:drop-shadow(0 6px 14px rgba(0,0,0,0.25));' : '';
+    layer.innerHTML = note.stickers.map(s => {
+      const scale = s.scale || 1;
+      const w = (s.baseW || 76) * scale;
+      const h = (s.baseH || 76) * scale;
+      return `
+        <div class="sticker image-sticker" data-id="${s.id}" style="left:${s.x}%; top:${s.y}%; width:${w}px; height:${h}px; transform:translate(-50%,-50%) rotate(${s.rot}deg);">
+          <img src="${s.src}" alt="스티커" style="${shadowStyle}">
+          <span class="remove" data-remove="${s.id}">✕</span>
+          <span class="resize-handle" data-resize="${s.id}"></span>
+          <span class="rotate-handle" data-rotate="${s.id}" title="회전">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>
+          </span>
+        </div>
+      `;
+    }).join('');
+    bindStickerEvents(note);
+    scheduleAutosave();
+  }
+
+  function bindStickerEvents(note){
+    const cardEl = document.getElementById('card');
+    const layer = document.getElementById('stickerLayer');
+    if(!layer) return;
+
+    layer.querySelectorAll('.remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.remove;
+        note.stickers = note.stickers.filter(s => s.id !== id);
+        renderStickerLayer(note);
+      });
+    });
+
+    layer.querySelectorAll('.resize-handle').forEach(handle => {
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handle.setPointerCapture(e.pointerId);
+        const id = handle.dataset.resize;
+        const stickerData = note.stickers.find(s => s.id === id);
+        const stickerEl = layer.querySelector(`.sticker[data-id="${id}"]`);
+        const rect = stickerEl.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const startDist = Math.max(10, Math.hypot(e.clientX - centerX, e.clientY - centerY));
+        const startScale = stickerData.scale || 1;
+
+        function onMove(ev){
+          const dist = Math.hypot(ev.clientX - centerX, ev.clientY - centerY);
+          let newScale = startScale * (dist / startDist);
+          newScale = Math.max(0.25, Math.min(5, newScale));
+          stickerData.scale = newScale;
+          stickerEl.style.width = ((stickerData.baseW || 76) * newScale) + 'px';
+          stickerEl.style.height = ((stickerData.baseH || 76) * newScale) + 'px';
+        }
+        function onUp(){
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          scheduleAutosave();
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      });
+    });
+
+    layer.querySelectorAll('.rotate-handle').forEach(handle => {
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handle.setPointerCapture(e.pointerId);
+        const id = handle.dataset.rotate;
+        const stickerData = note.stickers.find(s => s.id === id);
+        const stickerEl = layer.querySelector(`.sticker[data-id="${id}"]`);
+
+        function onMove(ev){
+          const rect = stickerEl.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const angleRad = Math.atan2(ev.clientY - centerY, ev.clientX - centerX);
+          let deg = Math.round(angleRad * 180 / Math.PI + 90);
+          stickerData.rot = deg;
+          stickerEl.style.transform = `translate(-50%,-50%) rotate(${deg}deg)`;
+        }
+        function onUp(){
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          scheduleAutosave();
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      });
+    });
+
+    layer.querySelectorAll('.sticker').forEach(stickerEl => {
+      stickerEl.addEventListener('pointerdown', (e) => {
+        if(e.target.closest('.remove') || e.target.closest('.resize-handle') || e.target.closest('.rotate-handle')) return;
+        e.preventDefault();
+        stickerEl.setPointerCapture(e.pointerId);
+        const id = stickerEl.dataset.id;
+        const stickerData = note.stickers.find(s => s.id === id);
+
+        function onMove(ev){
+          const rect = cardEl.getBoundingClientRect();
+          let xPct = ((ev.clientX - rect.left) / rect.width) * 100;
+          let yPct = ((ev.clientY - rect.top) / rect.height) * 100;
+          xPct = Math.max(0, Math.min(100, xPct));
+          yPct = Math.max(0, Math.min(100, yPct));
+          stickerEl.style.left = xPct + '%';
+          stickerEl.style.top = yPct + '%';
+          stickerData.x = xPct;
+          stickerData.y = yPct;
+        }
+        function onUp(){
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          scheduleAutosave();
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      });
+    });
+  }
+
+  function openModal(html, title){
+    document.getElementById('modalTitle').textContent = title || '캡처 완료';
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+  function closeModal(){
+    const overlay = document.getElementById('modalOverlay');
+    // If focus is still stuck on something inside the modal (e.g. a readonly
+    // share-link input that was .select()'ed), keyboard input can silently
+    // keep going there even after the modal is visually hidden. Explicitly
+    // release focus so typing works normally again afterward.
+    if(document.activeElement && overlay.contains(document.activeElement)){
+      document.activeElement.blur();
+    }
+    overlay.classList.remove('open');
+  }
+  document.getElementById('modalOverlay').addEventListener('click', (e) => { if(e.target.id === 'modalOverlay') closeModal(); });
+
+  function enterCapturePreview(){
+    const cardEl = document.getElementById('card');
+    if(!cardEl) return;
+    cardEl.classList.add('capture-mode');
+    document.getElementById('captureBar').classList.add('open');
+  }
+
+  function exitCapturePreview(){
+    const cardEl = document.getElementById('card');
+    if(cardEl) cardEl.classList.remove('capture-mode');
+    const bar = document.getElementById('captureBar');
+    if(bar) bar.classList.remove('open');
+  }
+
+  document.getElementById('cancelCaptureBtn').addEventListener('click', () => exitCapturePreview());
+  document.getElementById('confirmCaptureBtn').addEventListener('click', () => performCapture());
+
+  async function performCapture(){
+    const note = getSelectedNote();
+    if(!note) return;
+    const cardEl = document.getElementById('card');
+    openModal(`<div class="capture-loading"><div class="spinner"></div>캡처 중...</div>`, '캡처');
+
+    const originalBg = {
+      image: cardEl.style.backgroundImage,
+      size: cardEl.style.backgroundSize,
+      repeat: cardEl.style.backgroundRepeat,
+      position: cardEl.style.backgroundPosition
+    };
+
+    try{
+      const cardRect = cardEl.getBoundingClientRect();
+      // Temporarily strip the card's own background so html2canvas captures
+      // only the content (text/stickers/border), not the translucent glass
+      // background — which we reconstruct precisely on the canvas ourselves.
+      cardEl.style.backgroundImage = 'none';
+      cardEl.style.backgroundSize = '';
+      cardEl.style.backgroundRepeat = '';
+      cardEl.style.backgroundPosition = '';
+
+      const canvas = await html2canvas(cardEl, { backgroundColor: null, scale: 2, useCORS: true });
+
+      cardEl.style.backgroundImage = originalBg.image;
+      cardEl.style.backgroundSize = originalBg.size;
+      cardEl.style.backgroundRepeat = originalBg.repeat;
+      cardEl.style.backgroundPosition = originalBg.position;
+
+      const scaleFactor = canvas.width / cardRect.width;
+      const shareCanvas = await buildShareCard(canvas, note, scaleFactor);
+      const dataUrl = shareCanvas.toDataURL('image/png');
+      exitCapturePreview();
+      openModal(`
+        <img class="capture-preview" src="${dataUrl}" alt="캡처된 메모">
+        <div class="modal-actions">
+          <button class="btn" id="modalCloseBtn">닫기</button>
+          <a class="btn primary" id="modalDownloadBtn" href="${dataUrl}" download="${(note.title || '메모')}.png" style="text-decoration:none; text-align:center;">이미지 저장</a>
+        </div>
+      `, '캡처 완료');
+      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    }catch(err){
+      cardEl.style.backgroundImage = originalBg.image;
+      cardEl.style.backgroundSize = originalBg.size;
+      cardEl.style.backgroundRepeat = originalBg.repeat;
+      cardEl.style.backgroundPosition = originalBg.position;
+      exitCapturePreview();
+      openModal(`<div class="capture-loading">캡처에 실패했어요. 다시 시도해주세요.</div><div class="modal-actions"><button class="btn" id="modalCloseBtn2">닫기</button></div>`, '캡처');
+      document.getElementById('modalCloseBtn2').addEventListener('click', closeModal);
+    }
+  }
+
+  function drawPresetGradient(ctx, preset, w, h){
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, preset.base[0]);
+    grad.addColorStop(0.5, preset.base[1]);
+    grad.addColorStop(1, preset.base[2]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    const spots = [
+      { x:0.15, y:0.20, color:preset.colors[0] },
+      { x:0.85, y:0.15, color:preset.colors[1] },
+      { x:0.75, y:0.85, color:preset.colors[2] },
+      { x:0.20, y:0.85, color:preset.colors[3] }
+    ];
+    spots.forEach(s => {
+      const r = Math.max(w, h) * 0.5;
+      const rg = ctx.createRadialGradient(s.x*w, s.y*h, 0, s.x*w, s.y*h, r);
+      rg.addColorStop(0, s.color);
+      rg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    });
+  }
+
+  function drawPhotoBackground(ctx, dataUrl, w, h, blurPx){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        ctx.save();
+        ctx.filter = blurPx > 0 ? `blur(${blurPx}px)` : 'none';
+        const overscan = 1.25;
+        const scale = Math.max(w / img.width, h / img.height) * overscan;
+        const dw = img.width * scale, dh = img.height * scale;
+        const dx = (w - dw) / 2, dy = (h - dh) / 2;
+        ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = dataUrl;
+    });
+  }
+
+  function drawNoteCardBackground(ctx, note, x, y, w, h, scaleFactor){
+    return new Promise((resolve) => {
+      const { r, g, b } = hexToRgb(note.color || '#5B5FEF');
+      const alpha = note.glass ?? 0.72;
+
+      const finish = () => {
+        // white translucent overlay on top — this is what the opacity slider controls,
+        // mirroring the exact live-preview layering.
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fillRect(x, y, w, h);
+        resolve();
+      };
+
+      if(note.bgStyle === 'photo' && note.bgImage){
+        const img = new Image();
+        img.onload = () => {
+          ctx.save();
+          const scale = Math.max(w / img.width, h / img.height);
+          const dw = img.width * scale, dh = img.height * scale;
+          ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+          ctx.restore();
+          finish();
+        };
+        img.onerror = finish;
+        img.src = note.bgImage;
+        return;
+      }
+
+      if(note.bgStyle === 'solid'){
+        ctx.fillStyle = `rgba(${r},${g},${b},0.16)`;
+        ctx.fillRect(x, y, w, h);
+      } else if(note.bgStyle === 'gradient'){
+        const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+        grad.addColorStop(0, `rgba(${r},${g},${b},0.30)`);
+        grad.addColorStop(1, `rgba(255,255,255,0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, w, h);
+      } else if(note.bgStyle === 'dots'){
+        const size = 18 * scaleFactor;
+        ctx.fillStyle = `rgba(${r},${g},${b},0.45)`;
+        for(let yy = y; yy < y + h; yy += size){
+          for(let xx = x; xx < x + w; xx += size){
+            ctx.beginPath();
+            ctx.arc(xx + size/2, yy + size/2, 1.6 * scaleFactor, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else if(note.bgStyle === 'grid'){
+        const size = 24 * scaleFactor;
+        ctx.strokeStyle = `rgba(${r},${g},${b},0.22)`;
+        ctx.lineWidth = Math.max(1, scaleFactor);
+        for(let xx = x; xx <= x + w; xx += size){
+          ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + h); ctx.stroke();
+        }
+        for(let yy = y; yy <= y + h; yy += size){
+          ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke();
+        }
+      }
+      // 'glass' style has no extra pattern beneath — just the white overlay
+
+      finish();
+    });
+  }
+
+  async function buildShareCard(sourceCanvas, note, scaleFactor){
+    const pad = 56;
+    const w = sourceCanvas.width + pad * 2;
+    const h = sourceCanvas.height + pad * 2;
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const ctx = out.getContext('2d');
+
+    if(pageBg.mode === 'photo' && pageBg.photo){
+      await drawPhotoBackground(ctx, pageBg.photo, w, h, pageBg.blur);
+    } else {
+      drawPresetGradient(ctx, GRADIENT_PRESETS[pageBg.gradientIndex], w, h);
+    }
+
+    const cssRadius = 18;
+    const captureScale = scaleFactor || 2;
+    const clipRadius = cssRadius * captureScale;
+
+    // Render the drop shadow on a separate offscreen canvas, then punch out
+    // the shape's own interior so only the soft shadow *bleed* remains —
+    // this way the shadow doesn't leave an opaque layer behind that would
+    // block the card's own (possibly translucent) background from showing
+    // the page background beneath it.
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = w; shadowCanvas.height = h;
+    const sctx = shadowCanvas.getContext('2d');
+    sctx.save();
+    sctx.shadowColor = 'rgba(20,20,40,0.28)';
+    sctx.shadowBlur = 70;
+    sctx.shadowOffsetY = 26;
+    roundRect(sctx, pad, pad, sourceCanvas.width, sourceCanvas.height, clipRadius);
+    sctx.fillStyle = '#ffffff';
+    sctx.fill();
+    sctx.restore();
+    sctx.save();
+    sctx.globalCompositeOperation = 'destination-out';
+    roundRect(sctx, pad, pad, sourceCanvas.width, sourceCanvas.height, clipRadius);
+    sctx.fill();
+    sctx.restore();
+    ctx.drawImage(shadowCanvas, 0, 0);
+
+    // the card's real background (transparency, pattern, or photo), clipped to its rounded shape —
+    // painted directly over the page background drawn above, so alpha behaves correctly
+    ctx.save();
+    roundRect(ctx, pad, pad, sourceCanvas.width, sourceCanvas.height, clipRadius);
+    ctx.clip();
+    if(note){
+      await drawNoteCardBackground(ctx, note, pad, pad, sourceCanvas.width, sourceCanvas.height, captureScale);
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pad, pad, sourceCanvas.width, sourceCanvas.height);
+    }
+    ctx.drawImage(sourceCanvas, pad, pad);
+    ctx.restore();
+
+    return out;
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  document.getElementById('newNoteBtn').addEventListener('click', () => {
+    const n = {
+      id: cryptoId(), title: '', content: '',
+      color: THEME_PRESETS[Math.floor(Math.random()*THEME_PRESETS.length)],
+      font: FONT_OPTIONS[0].value,
+      pinned: false, glass: 0.72, bgStyle: 'glass', bgImage: null, stickers: [], stickerShadow: true,
+      updatedAt: Date.now()
+    };
+    notes.push(n);
+    selectedId = n.id;
+    openPopover = null;
+    renderList(); renderMain();
+    setTimeout(() => { const t = document.getElementById('titleInput'); if(t) t.focus(); }, 0);
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value; renderList();
+  });
+
+  // ================= page-wide background controls =================
+  function renderPageGradientGrid(){
+    const grid = document.getElementById('pageGradientGrid');
+    grid.innerHTML = GRADIENT_PRESETS.map((p, i) => `
+      <button class="bg-option ${pageBg.mode==='gradient' && pageBg.gradientIndex===i ? 'selected':''}" data-grad="${i}">
+        <span class="bg-swatch" style="background:linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]} 40%, ${p.colors[2]} 70%, ${p.colors[3]})"></span>
+        <span>${p.name}</span>
+      </button>
+    `).join('');
+    grid.querySelectorAll('.bg-option').forEach(b => {
+      b.addEventListener('click', () => {
+        pageBg.mode = 'gradient';
+        pageBg.gradientIndex = parseInt(b.dataset.grad, 10);
+        applyPageBackground();
+        renderPageGradientGrid();
+        renderPageBgPhotoArea();
+      });
+    });
+  }
+
+  function renderPageBgPhotoArea(){
+    const area = document.getElementById('pageBgPhotoArea');
+    if(pageBg.mode === 'photo' && pageBg.photo){
+      area.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="bg-swatch" style="background-image:url('${pageBg.photo}'); background-size:cover; background-position:center; width:40px; height:30px;"></span>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <button class="btn ghost-sm" id="pageBgChangeBtn">사진 변경</button>
+            <button class="btn ghost-sm" id="pageBgRemoveBtn">제거</button>
+          </div>
+        </div>
+        <div class="opacity-control" style="width:100%;">
+          <span style="font-size:11px; color:var(--ink-faint); white-space:nowrap;">블러</span>
+          <input type="range" id="pageBgBlurSlider" min="0" max="50" step="1" value="${pageBg.blur}" style="width:100%;">
+        </div>
+      `;
+      document.getElementById('pageBgChangeBtn').addEventListener('click', () => document.getElementById('pageBgFileInput').click());
+      document.getElementById('pageBgRemoveBtn').addEventListener('click', () => {
+        pageBg.mode = 'gradient';
+        pageBg.photo = null;
+        applyPageBackground();
+        renderPageGradientGrid();
+        renderPageBgPhotoArea();
+      });
+      document.getElementById('pageBgBlurSlider').addEventListener('input', (e) => {
+        pageBg.blur = parseInt(e.target.value, 10);
+        applyPageBackground();
+      });
+    } else {
+      area.innerHTML = `
+        <button class="upload-btn" id="pageBgUploadBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          사진 업로드
+        </button>
+      `;
+      document.getElementById('pageBgUploadBtn').addEventListener('click', () => document.getElementById('pageBgFileInput').click());
+    }
+  }
+
+  document.getElementById('pageBgFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const dataUrl = await readFileAsDataUrl(file);
+    pageBg.mode = 'photo';
+    pageBg.photo = dataUrl;
+    applyPageBackground();
+    renderPageGradientGrid();
+    renderPageBgPhotoArea();
+    e.target.value = '';
+  });
+
+  let pageBgPopoverOpen = false;
+  document.getElementById('pageBgTrigger').addEventListener('click', (e) => {
+    e.stopPropagation();
+    pageBgPopoverOpen = !pageBgPopoverOpen;
+    document.getElementById('pageBgPopover').classList.toggle('open', pageBgPopoverOpen);
+  });
+  document.addEventListener('click', (e) => {
+    if(!pageBgPopoverOpen) return;
+    const pop = document.getElementById('pageBgPopover');
+    const trigger = document.getElementById('pageBgTrigger');
+    if(!pop.contains(e.target) && e.target !== trigger && !trigger.contains(e.target)){
+      pop.classList.remove('open');
+      pageBgPopoverOpen = false;
+    }
+  });
+
+  if(isElectronApp){
+    try{
+      const saved = await window.electronAPI.loadData();
+      if(saved){
+        const parsed = JSON.parse(saved);
+        if(parsed && Array.isArray(parsed.notes) && parsed.notes.length){
+          notes = parsed.notes;
+          const stillExists = parsed.selectedId && notes.find(n => n.id === parsed.selectedId);
+          selectedId = stillExists ? parsed.selectedId : notes[0].id;
+        }
+        if(parsed && parsed.pageBg){
+          pageBg = parsed.pageBg;
+        }
+        if(parsed && Array.isArray(parsed.customPalette)){
+          customPalette = parsed.customPalette;
+        }
+      }
+    }catch(err){ /* ignore, fall back to defaults */ }
+  }
+
+  renderPageGradientGrid();
+  renderPageBgPhotoArea();
+  applyPageBackground();
+
+  renderList();
+  renderMain();
+})();
+</script>
+</body>
+</html>
